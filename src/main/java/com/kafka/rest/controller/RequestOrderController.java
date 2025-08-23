@@ -24,7 +24,7 @@ public class RequestOrderController {
     @PostMapping("/requestOrder")
     public ResponseEntity<String> save(@RequestBody OrderKafka orderKafka) {
 
-        for (int i = 0; i < 5000000; i++) {
+        for (int i = 0; i < 100000; i++) {
             requestOrderService.addEvent("local-cluster", orderKafka);
         }
 

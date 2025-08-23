@@ -15,7 +15,7 @@ public class KafkaConfig {
         var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
         factory.setConsumerFactory(consumerFactory);
         factory.setBatchListener(true); // <- ESSENCIAL
-        factory.setConcurrency(10); // você pode ajustar esse valor também
+        factory.setConcurrency(4); // você pode ajustar esse valor também
 
         return factory;
     }
