@@ -1,19 +1,18 @@
 package com.kafka.rest.kafka.consumer
 
 import com.fasterxml.jackson.core.JsonProcessingException
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kafka.rest.kafka.data.OrderKafka
 import com.kafka.rest.service.IdempotencyService
 import jakarta.annotation.PreDestroy
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.stereotype.Service
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 @Service
 class OrderKafkaConsumer(private val idempotencyService: IdempotencyService) {
@@ -23,7 +22,7 @@ class OrderKafkaConsumer(private val idempotencyService: IdempotencyService) {
     @KafkaListener(
         topics = ["local-cluster"],
         groupId = "RequestOrder",
-        containerFactory = "kafkaBatchListenerContainerFactory"
+        containerFactory = "kafkaBatchListenerContainerFactory",
     )
     fun run(records: List<ConsumerRecord<String, String>>) {
         for (record in records) {
@@ -38,7 +37,6 @@ class OrderKafkaConsumer(private val idempotencyService: IdempotencyService) {
                     }
 
                     log.info("Recebido: {}", order.name)
-
                 } catch (e: JsonProcessingException) {
                     log.warn("Falha ao desserializar: {}", record.value(), e)
                 } catch (e: Exception) {
