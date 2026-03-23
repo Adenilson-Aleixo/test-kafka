@@ -6,21 +6,23 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kafka.rest.kafka.data.OrderKafka
 import com.kafka.rest.service.IdempotencyService
 import jakarta.annotation.PreDestroy
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.slf4j.LoggerFactory
-import org.springframework.kafka.annotation.KafkaListener
-import org.springframework.stereotype.Service
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.slf4j.LoggerFactory
+import org.springframework.kafka.annotation.KafkaListener
+import org.springframework.stereotype.Component
 
-@Service
-class OrderKafkaConsumer(private val idempotencyService: IdempotencyService) {
+@Component
+class OrderKafkaConsumer(
+    private val idempotencyService: IdempotencyService
+) {
     private val log = LoggerFactory.getLogger(OrderKafkaConsumer::class.java)
-    private val pool: ExecutorService = Executors.newFixedThreadPool(100)
+    private val pool: ExecutorService = Executors.newFixedThreadPool(THREAD_TOTAL)
 
     @KafkaListener(
-        topics = ["local-cluster"],
+        topics = ["\${kafka.consumer.topic.name.create-order}"],
         groupId = "RequestOrder",
         containerFactory = "kafkaBatchListenerContainerFactory",
     )
@@ -50,5 +52,9 @@ class OrderKafkaConsumer(private val idempotencyService: IdempotencyService) {
     fun shutdown() {
         pool.shutdown()
         pool.awaitTermination(30, TimeUnit.SECONDS)
+    }
+
+    companion object {
+        const val THREAD_TOTAL = 10
     }
 }

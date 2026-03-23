@@ -11,6 +11,9 @@
 # Arquivos temporários
 *.swp
 *.tmp
+*.bin
+*.lock
+*.probe
 
 ### Gradle ###
 .gradle/
