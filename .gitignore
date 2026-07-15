@@ -40,6 +40,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### Claude Code ###
+.claude/
+
 ### Sistema Operacional ###
 # macOS
 .DS_Store
