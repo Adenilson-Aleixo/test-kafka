@@ -17,6 +17,7 @@
 
 ### Gradle ###
 .gradle/
+.kotlin/
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
@@ -29,7 +30,6 @@ target/
 .idea/
 *.iws
 *.ipr
-*.iml
 out/
 
 ### Eclipse ###

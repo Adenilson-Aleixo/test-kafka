@@ -6,9 +6,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.kafka.rest.kafka.data.OrderKafka
 import com.kafka.rest.service.IdempotencyService
 import jakarta.annotation.PreDestroy
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.LoggerFactory
 import org.springframework.kafka.annotation.KafkaListener
@@ -19,7 +20,12 @@ class OrderKafkaConsumer(
     private val idempotencyService: IdempotencyService
 ) {
     private val log = LoggerFactory.getLogger(OrderKafkaConsumer::class.java)
-    private val pool: ExecutorService = Executors.newFixedThreadPool(THREAD_TOTAL)
+
+    // 1. Definimos o Job como Supervisor para isolar falhas
+    private val consumerJob = SupervisorJob()
+
+    // 2. Criamos o Escopo vinculado ao Job e rodando em IO
+    private val scope = CoroutineScope(consumerJob + Dispatchers.IO)
 
     @KafkaListener(
         topics = ["\${kafka.consumer.topic.name.create-order}"],
@@ -28,33 +34,35 @@ class OrderKafkaConsumer(
     )
     fun run(records: List<ConsumerRecord<String, String>>) {
         for (record in records) {
-            pool.submit {
-                try {
-                    val mapper = jacksonObjectMapper().registerModule(KotlinModule())
-                    val order = mapper.readValue(record.value(), OrderKafka::class.java)
-
-                    if (!idempotencyService.tryProcess(order.id)) {
-                        println("Evento já processado. Ignorando.")
-                        return@submit
-                    }
-
-                    log.info("Recebido: {}", order.name)
-                } catch (e: JsonProcessingException) {
-                    log.warn("Falha ao desserializar: {}", record.value(), e)
-                } catch (e: Exception) {
-                    log.error("Erro inesperado", e)
-                }
+            // 3. Lançamos a coroutine no nosso escopo gerenciado
+            scope.launch {
+                processRecord(record)
             }
+        }
+    }
+
+    private fun processRecord(record: ConsumerRecord<String, String>) {
+        try {
+            val mapper = jacksonObjectMapper().registerModule(KotlinModule())
+            val order = mapper.readValue(record.value(), OrderKafka::class.java)
+
+            if (!idempotencyService.tryProcess(order.id)) {
+                log.info("Evento {} já processado. Ignorando.", order.id)
+                return
+            }
+
+            log.info("Recebido: {}", order.name)
+        } catch (e: JsonProcessingException) {
+            log.warn("Falha ao desserializar: {}", record.value(), e)
+        } catch (e: Exception) {
+            log.error("Erro inesperado no processamento da mensagem", e)
         }
     }
 
     @PreDestroy
     fun shutdown() {
-        pool.shutdown()
-        pool.awaitTermination(30, TimeUnit.SECONDS)
-    }
-
-    companion object {
-        const val THREAD_TOTAL = 10
+        log.info("Encerrando OrderKafkaConsumer e cancelando coroutines...")
+        // 4. Cancelamos o Job, o que propaga o cancelamento para todas as coroutines filhas
+        consumerJob.cancel()
     }
 }
