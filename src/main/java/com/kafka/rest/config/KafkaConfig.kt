@@ -1,22 +1,22 @@
-package com.kafka.rest.config;
+package com.kafka.rest.config
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
-import org.springframework.kafka.core.ConsumerFactory;
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
+import org.springframework.kafka.core.ConsumerFactory
 
 @Configuration
-public class KafkaConfig {
+class KafkaConfig {
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, String> kafkaBatchListenerContainerFactory(
-            ConsumerFactory<String, String> consumerFactory) {
+    fun kafkaBatchListenerContainerFactory(
+        consumerFactory: ConsumerFactory<String, String>
+    ): ConcurrentKafkaListenerContainerFactory<String, String> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String, String>()
+        factory.setConsumerFactory(consumerFactory)
+        factory.isBatchListener = true // <- ESSENCIAL
+        factory.setConcurrency(4) // você pode ajustar esse valor também
 
-        var factory = new ConcurrentKafkaListenerContainerFactory<String, String>();
-        factory.setConsumerFactory(consumerFactory);
-        factory.setBatchListener(true); // <- ESSENCIAL
-        factory.setConcurrency(4); // você pode ajustar esse valor também
-
-        return factory;
+        return factory
     }
 }

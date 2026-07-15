@@ -1,15 +1,13 @@
-package com.kafka.rest;
+package com.kafka.rest
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.kafka.annotation.EnableKafka;
+import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.runApplication
+import org.springframework.kafka.annotation.EnableKafka
 
 @SpringBootApplication
 @EnableKafka
-public class RestApplication {
+class RestApplication
 
-	public static void main(String[] args) {
-		SpringApplication.run(RestApplication.class, args);
-	}
-
+fun main(args: Array<String>) {
+    runApplication<RestApplication>(*args)
 }
